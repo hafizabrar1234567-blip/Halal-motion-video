@@ -12,7 +12,7 @@ export const COPY = {
     surahBadge: "سُورَةُ آلِ عِمْرَان · الآيات ٨ - ٩",
     surahEn: "Surah Aal-e-Imran · Verses 8 - 9",
     arabic: "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
-    urdu: "شروع اللہ کے نام سے جو بڑا مہربان، نہایت رحم والا ہے",
+    urdu: "شروع اللہ کے نام سے جو سب پر مہربان، بہت رحم والا ہے",
     english: "In the name of Allah, the Entirely Merciful, the Especially Merciful",
   },
   ayah8: {
@@ -23,7 +23,7 @@ export const COPY = {
       "وَهَبْ لَنَا مِن لَّدُنكَ رَحْمَةً",
       "إِنَّكَ أَنتَ الْوَهَّابُ ۝",
     ],
-    urdu: "اے ہمارے رب! ہمارے دلوں کو ٹیڑھا نہ کر بعد اس کے کہ تو نے ہمیں ہدایت بخشی، اور ہمیں اپنے پاس سے خاص رحمت عطا فرما، بے شک تو ہی سب کچھ عطا کرنے والا ہے۔",
+    urdu: "اے ہمارے رب! ہمارے دل ٹیڑھے نہ کر، بعد اس کے کہ تو نے ہمیں ہدایت دی، اور ہمیں اپنے پاس سے خاص رحمت عطا فرما، بے شک تو ہی بہت عطا کرنے والا ہے۔",
     english: "Our Lord, let not our hearts deviate after You have guided us and grant us from Yourself mercy. Indeed, You are the Bestower.",
   },
   ayah9: {
@@ -33,7 +33,7 @@ export const COPY = {
       "رَبَّنَا إِنَّكَ جَامِعُ النَّاسِ لِيَوْمٍ لَّا رَيْبَ فِيهِ",
       "إِنَّ اللَّهَ لَا يُخْلِفُ الْمِيعَادَ ۝",
     ],
-    urdu: "اے ہمارے رب! تو یقیناً سب لوگوں کو ایک ایسے دن جمع کرنے والا ہے جس میں کوئی شک نہیں، بے شک اللہ وعدے کے خلاف نہیں کرتا۔",
+    urdu: "اے ہمارے رب! بے شک تو تمام لوگوں کو ایک ایسے دن جمع کرنے والا ہے جس میں کوئی شک نہیں، بے شک اللہ وعدے کے خلاف نہیں کرتا۔",
     english: "Our Lord, surely You will gather mankind together on a Day about which there is no doubt. Indeed, Allah never breaks His promise.",
   },
   outro: {
