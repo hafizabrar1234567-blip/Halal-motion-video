@@ -11,7 +11,7 @@ git add .
 
 echo.
 echo 2. Committing changes...
-git commit -m "Restore original Halal Motion Videos dashboard with fully working New Brand and New Video buttons"
+git commit -m "Fix dashboard runtime script initialization and guarantee New Brand and New Video buttons work flawlessly"
 
 echo.
 echo 3. Pushing to GitHub main branch...

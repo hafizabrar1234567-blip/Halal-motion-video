@@ -50,7 +50,6 @@ let originalHtml = fs.readFileSync(DASHBOARD_SRC, "utf8");
 
 // Enhance state fallback & persistent New Brand / New Video logic for Web & Vercel
 const WEB_ENHANCEMENT = `
-<script>
 // --- Halal Motion Videos Web & Vercel Compatibility Layer ---
 const DEFAULT_WEB_STATE = {
   brands: [
@@ -128,19 +127,65 @@ function saveLocalCustomBrand(brand, video) {
   }
   try { localStorage.setItem("hmv_custom_brands", JSON.stringify(list)); } catch {}
 }
-
-// Override or wrap openStudio to open /player/
-const originalOpenStudio = typeof openStudio === "function" ? openStudio : null;
-window.openStudio = function(compId) {
-  window.open("/player/", "_blank");
-};
-</script>
 `;
 
-// Replace `let state = { brands: [], jobs: [], studio: { running: false, url: "" } };`
+// Replace `let state = ...` and `let sel = ...`
 originalHtml = originalHtml.replace(
-  'let state = { brands: [], jobs: [], studio: { running: false, url: "" } };',
-  'let state = DEFAULT_WEB_STATE;\ntry { const savedSel = JSON.parse(localStorage.getItem("sel")); if (!savedSel) sel = { brand: "quran-promo", video: "video01" }; } catch {}'
+  'let state = { brands: [], jobs: [], studio: { running: false, url: "" } };\nlet sel = null, fmt = "", docTab = "brief";\ntry { sel = JSON.parse(localStorage.getItem("sel")); } catch {}',
+  `${WEB_ENHANCEMENT}\nlet state = DEFAULT_WEB_STATE;\nlet sel = null, fmt = "", docTab = "brief";\ntry { sel = JSON.parse(localStorage.getItem("sel")); } catch {}\nif (!sel && state.brands[0]?.videos[0]) {\n  sel = { brand: state.brands[0].brand, video: state.brands[0].videos[0].video };\n}`
+);
+
+// Enhance openStudio to open the Remotion web player directly
+originalHtml = originalHtml.replace(
+  'async function openStudio(compId) {',
+  'async function openStudio(compId) { window.open("/player/", "_blank"); return;'
+);
+
+// Expose openNew globally on window
+originalHtml = originalHtml.replace(
+  'function openNew(brand) {',
+  'window.openNew = openNew;\nfunction openNew(brand) {'
+);
+
+// Safeguard renderDirector, renderStyle, and renderMaterials so it never crashes if fields are missing
+originalHtml = originalHtml.replace(
+  'function renderDirector() {\n  if (!dir || !$("#chat")) return;',
+  `function renderDirector() {
+  if (!dir || !$("#chat")) return;
+  if (!Array.isArray(dir.messages)) dir.messages = [];
+  if (!dir.efforts) dir.efforts = { medium: "Medium", high: "High", xhigh: "Extra high" };
+  if (!dir.effort) dir.effort = "high";
+  if (!dir.model) dir.model = "Claude / Gemini";
+  if (!dir.styles || !Array.isArray(dir.styles)) dir.styles = [];
+  if (!dir.materials) dir.materials = { brand: [], video: [] };
+  if (!Array.isArray(dir.materials.brand)) dir.materials.brand = [];
+  if (!Array.isArray(dir.materials.video)) dir.materials.video = [];`
+);
+
+originalHtml = originalHtml.replace(
+  'function renderStyle() {\n  const box = $("#styleCard");\n  if (!dir || !box) return;',
+  `function renderStyle() {
+  const box = $("#styleCard");
+  if (!dir || !box) return;
+  if (!Array.isArray(dir.styles)) dir.styles = [];`
+);
+
+originalHtml = originalHtml.replace(
+  'function renderMaterials() {\n  if (!dir || !$("#materials")) return;',
+  `function renderMaterials() {
+  if (!dir || !$("#materials")) return;
+  if (!dir.materials) dir.materials = { brand: [], video: [] };
+  if (!Array.isArray(dir.materials.brand)) dir.materials.brand = [];
+  if (!Array.isArray(dir.materials.video)) dir.materials.video = [];`
+);
+
+// Safeguard loadSettings if /api/settings is slow or unavailable
+originalHtml = originalHtml.replace(
+  'async function loadSettings() {\n  try { settings = await api("/api/settings"); } catch { return; }\n  $("#settingsDot").hidden = settings.elevenlabs.hasKey;\n}',
+  `async function loadSettings() {
+  try { settings = await api("/api/settings"); } catch { settings = { elevenlabs: { hasKey: false, models: {} } }; }
+  if ($("#settingsDot")) $("#settingsDot").hidden = !!(settings?.elevenlabs?.hasKey);
+}`
 );
 
 // Enhance `refresh()` so if /api/state is not reachable or on web, it seamlessly merges local custom brands
@@ -153,6 +198,9 @@ originalHtml = originalHtml.replace(
   } catch (err) {
     if (!state || !state.brands.length) state = JSON.parse(JSON.stringify(DEFAULT_WEB_STATE));
   }
+  if (!state.brands) state.brands = [];
+  if (!state.jobs) state.jobs = [];
+  if (!state.studio) state.studio = { running: false, url: "/player/" };
   // Merge locally created brands so "New brand" and "New video" always persist!
   const customList = getLocalCustomBrands();
   for (const cb of customList) {
@@ -189,8 +237,6 @@ originalHtml = originalHtml.replace(
     refresh();`
 );
 
-// Inject the Web Enhancement script before </body>
-originalHtml = originalHtml.replace("</body>", WEB_ENHANCEMENT + "\n</body>");
-
 fs.writeFileSync(path.join(DIST, "index.html"), originalHtml, "utf8");
 console.log("==> Original Halal Motion Videos Dashboard successfully built into dist/index.html!");
+
