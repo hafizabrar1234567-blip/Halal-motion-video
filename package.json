@@ -12,7 +12,7 @@
     "setup": "node tools/setup.mjs",
     "doctor": "node tools/doctor.mjs",
     "studio": "remotion studio",
-    "build": "remotion bundle src/index.ts --out-dir=dist",
+    "build": "node tools/build-web.mjs",
     "new": "node tools/new.mjs",
     "render": "node tools/render.mjs",
     "stills": "node tools/stills.mjs",
