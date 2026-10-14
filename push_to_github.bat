@@ -11,7 +11,7 @@ git add .
 
 echo.
 echo 2. Committing changes...
-git commit -m "Fix dashboard runtime script initialization and guarantee New Brand and New Video buttons work flawlessly"
+git commit -m "Add media upload, attach button in chat, prominent materials placement, and isolate brand outputs"
 
 echo.
 echo 3. Pushing to GitHub main branch...

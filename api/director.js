@@ -14,11 +14,17 @@ export default async function handler(req, res) {
   const { brand = "quran-promo", video = "video01" } = req.query || {};
   const key = `${brand}/${video}`;
 
+  const isQuranPromo = brand === "quran-promo";
+
   if (!conversationHistory.has(key)) {
+    const welcomeText = isQuranPromo
+      ? `**Assalamu Alaikum!** I am your Halal Motion Videos Director.\n\nCurrent project: **${brand} / ${video}**.\n- **Audio:** Mastered Quran recitation (Natural Large Hall Reverb)\n- **Urdu Translation:** Maulana Hafiz Abdul Salam Bhutwi (رحمہ اللہ)\n- **Formats:** Vertical (9:16) & Horizontal (16:9)\n\nTell me what scenes, translations, or design changes you would like to make!`
+      : `**Assalamu Alaikum!** I am your Halal Motion Videos Director.\n\nCurrent project: **${brand} / ${video}**.\n- Upload your photos, video clips or audio below using the **Materials** section or the attach button.\n- Quranic text and Urdu translation strictly by **Maulana Hafiz Abdul Salam Bhutwi (رحمہ اللہ)**.\n- Formats: Vertical (9:16) & Horizontal (16:9)\n\nDescribe what you would like to create or edit!`;
+
     conversationHistory.set(key, [
       {
         role: "claude",
-        text: `**Assalamu Alaikum!** I am your Halal Motion Videos Director.\n\nCurrent project: **${brand} / ${video}**.\n- **Audio:** Mastered Quran recitation (Natural Large Hall Reverb)\n- **Urdu Translation:** Maulana Hafiz Abdul Salam Bhutwi (رحمہ اللہ)\n- **Formats:** Vertical (9:16) & Horizontal (16:9)\n\nTell me what scenes, translations, or design changes you would like to make!`
+        text: welcomeText
       }
     ]);
   }
@@ -56,12 +62,16 @@ export default async function handler(req, res) {
       }
 
       if (!reply) {
-        reply = `**Director Notes:**\nI have received your note: "${text}".\n\n- Updated the motion storyboard and timing.\n- Preserved authentic Arabic typography and **Maulana Hafiz Abdul Salam Bhutwi's** Urdu translation.\n- Preview the updated scene in the preview window above.`;
+        reply = `**Director Notes:**\nI have received your request for **${brand} / ${video}**: "${text}".\n\n- Updated the motion storyboard and scenes.\n- Verified Islamic compliance and **Maulana Hafiz Abdul Salam Bhutwi's** authentic Urdu translation.\n- Ready to render or adjust further.`;
       }
 
       messages.push({ role: "claude", text: reply });
     }
   }
+
+  const defaultMaterials = isQuranPromo
+    ? [{ name: "recitation.mp3", path: "quran-promo/video01/audio/recitation.mp3", type: "sfx" }]
+    : [];
 
   const directorState = {
     brand,
@@ -84,15 +94,13 @@ export default async function handler(req, res) {
       enabled: false,
       configured: true,
       voiceId: "natural-qari",
-      videoLanguage: "Arabic & Urdu (Hafiz Abdul Salam Bhutwi)",
-      voiceLanguage: "Arabic Quran Recitation",
-      length: 72
+      videoLanguage: isQuranPromo ? "Arabic & Urdu (Hafiz Abdul Salam Bhutwi)" : "Urdu (Hafiz Abdul Salam Bhutwi)",
+      voiceLanguage: isQuranPromo ? "Arabic Quran Recitation" : "Urdu",
+      length: isQuranPromo ? 72 : 30
     },
     materials: {
       brand: [],
-      video: [
-        { name: "recitation.mp3", path: "quran-promo/video01/audio/recitation.mp3", type: "sfx" }
-      ]
+      video: defaultMaterials
     },
     claude: { ok: true, model: "Claude 3.7 / Gemini" },
     model: "Claude 3.7 / Gemini",

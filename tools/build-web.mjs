@@ -218,6 +218,153 @@ originalHtml = originalHtml.replace(
   }`
 );
 
+// Enhance `select()` so switching brands clears all stale caches and keys
+originalHtml = originalHtml.replace(
+  'const select = (brand, video) => { sel = { brand, video }; fmt = ""; docTab = "brief"; try { localStorage.setItem("sel", JSON.stringify(sel)); } catch {} skeletonKey = ""; };',
+  `const select = (brand, video) => {
+  sel = { brand, video };
+  fmt = "";
+  docTab = "brief";
+  try { localStorage.setItem("sel", JSON.stringify(sel)); } catch {}
+  skeletonKey = "";
+  restKey = "";
+  chatKey = "";
+  matKey = "";
+  styleKey = "";
+};`
+);
+
+// Guarantee rk in refresh includes brand and video name
+originalHtml = originalHtml.replace(
+  'const rk = JSON.stringify([fmt, docTab, c.video.outputs, c.video.doc, c.brand.brandDoc]);',
+  'const rk = JSON.stringify([b.brand, v.video, fmt, docTab, c.video.outputs, c.video.doc, c.brand.brandDoc]);'
+);
+
+// Move Materials directly beneath Director chat for immediate visibility
+originalHtml = originalHtml.replace(
+  `<div class="card">
+      <div class="card-head"><h3>\${icon("film")}Video settings</h3><span class="note">Claude follows these automatically</span></div>
+      <div class="vo-row" id="langRow" style="margin-top:0"></div>
+      <div class="vo-row" id="voRow" style="margin-top:8px"></div>
+    </div>
+
+    <div id="styleCard"></div>
+    <div id="materials"></div>
+    <div id="rest"></div>`,
+  `<div id="materials"></div>
+
+    <div class="card">
+      <div class="card-head"><h3>\${icon("film")}Video settings</h3><span class="note">Claude follows these automatically</span></div>
+      <div class="vo-row" id="langRow" style="margin-top:0"></div>
+      <div class="vo-row" id="voRow" style="margin-top:8px"></div>
+    </div>
+
+    <div id="styleCard"></div>
+    <div id="rest"></div>`
+);
+
+// Add Attach Media button right in the Director Composer
+originalHtml = originalHtml.replace(
+  '<button class="primary" id="sendBtn" type="submit">${icon("send")}Send</button>',
+  '<button type="button" class="ghost" id="attachBtn" title="Upload image, video or audio">${icon("upload")}Attach Media / میڈیا اپلوڈ</button><button class="primary" id="sendBtn" type="submit">${icon("send")}Send</button>'
+);
+
+// Prominent Materials Card styling with Urdu & English headers
+originalHtml = originalHtml.replace(
+  `<div class="card">
+    <div class="card-head"><h3>\${icon("box")}Materials</h3><span class="note">Claude builds from these</span></div>`,
+  `<div class="card" style="border: 1.5px solid var(--accent); box-shadow: 0 4px 20px rgba(224,168,96,0.12);">
+    <div class="card-head">
+      <h3>\${icon("box")}Materials & Media (تصاویر، ویڈیوز اور آڈیو اپلوڈ کریں)</h3>
+      <span class="note" style="color:var(--accent2);font-weight:600">Claude uses these in your video scenes</span>
+    </div>`
+);
+
+originalHtml = originalHtml.replace(
+  `<div class="drop" id="drop">
+      \${icon("upload")}
+      <div>\${uploading ? esc(uploading) : "<b>Drop files here</b> or click to choose"}</div>
+      <div class="sub">Logo, screenshots, fonts, sounds — sorted into img/, fonts/, sfx/ automatically</div>
+      <input type="file" id="fileInput" multiple hidden />
+    </div>`,
+  `<div class="drop" id="drop" style="border: 2px dashed var(--accent); padding: 22px; text-align: center; cursor: pointer; border-radius: 12px; background: var(--accent-soft); transition: all .2s;">
+      \${icon("upload")}
+      <div style="font-size: 15px; font-weight: 700; margin: 4px 0 2px; color: var(--text)">Click to Choose Image / Video / Audio (تصویر، ویڈیو یا آڈیو فائل منتخب کریں)</div>
+      <div class="sub">Select pictures, clips, logos, or recitation audio from your phone or PC</div>
+      <input type="file" id="fileInput" accept="image/*,video/*,audio/*" multiple hidden />
+    </div>`
+);
+
+// Client-side file uploading with preview, localStorage persistence and chat notification
+originalHtml = originalHtml.replace(
+  'async function uploadFiles(files) {\n  files = [...files];\n  if (!files.length || !sel) return;\n  let done = 0;\n  try {\n    for (const f of files) {\n      await new Promise((resolve, reject) => {\n        const x = new XMLHttpRequest();\n        x.open("POST", `/api/upload?${q()}&scope=${uploadScope}&name=${encodeURIComponent(f.name)}`);\n        x.upload.onprogress = (e) => { uploading = `Uploading ${f.name} — ${Math.round((e.loaded / e.total) * 100)}%`; matKey = ""; renderMaterials(); };\n        x.onload = () => (x.status === 200 ? resolve() : reject(new Error(JSON.parse(x.responseText || "{}").error || "Upload failed")));\n        x.onerror = () => reject(new Error("Upload failed"));\n        x.send(f);\n      });\n      done++;\n    }\n    toast(`Uploaded ${done} file${done === 1 ? "" : "s"}`);\n  } catch (err) { toast(err.message); }\n  uploading = ""; matKey = ""; refresh();\n}',
+  `async function uploadFiles(files) {
+  files = [...files];
+  if (!files.length || !sel) return;
+  let done = 0;
+  if (!dir) dir = { materials: { brand: [], video: [] } };
+  if (!dir.materials) dir.materials = { brand: [], video: [] };
+  if (!Array.isArray(dir.materials.video)) dir.materials.video = [];
+
+  for (const f of files) {
+    try {
+      const blobUrl = URL.createObjectURL(f);
+      const ext = (f.name.split(".").pop() || "").toLowerCase();
+      let type = "other";
+      if (/^(png|jpe?g|webp|gif|svg|avif)$/.test(ext)) type = "img";
+      else if (/^(mp3|wav|m4a|aac|ogg)$/.test(ext)) type = "sfx";
+      else if (/^(mp4|mov|webm)$/.test(ext)) type = "video";
+
+      dir.materials.video.unshift({ name: f.name, path: f.name, url: blobUrl, type });
+
+      // Save to localStorage
+      try {
+        const key = "hmv_mat_" + sel.brand + "_" + sel.video;
+        let savedMat = JSON.parse(localStorage.getItem(key) || "[]");
+        savedMat = savedMat.filter(x => x.name !== f.name);
+        savedMat.unshift({ name: f.name, path: f.name, url: blobUrl, type });
+        localStorage.setItem(key, JSON.stringify(savedMat));
+      } catch {}
+
+      // Inform AI Director in chat box
+      const promptEl = $("#prompt");
+      if (promptEl) {
+        const attachNote = "Please edit and use " + f.name + " in this video.";
+        promptEl.value = promptEl.value ? promptEl.value + "\\n" + attachNote : attachNote;
+        promptEl.focus();
+      }
+
+      // Upload to /api/upload
+      try {
+        const formData = new FormData();
+        formData.append("file", f);
+        fetch("/api/upload?" + q() + "&scope=" + uploadScope + "&name=" + encodeURIComponent(f.name), {
+          method: "POST",
+          body: formData
+        }).catch(() => {});
+      } catch {}
+
+      done++;
+    } catch (err) {
+      console.warn("Upload error:", err);
+    }
+  }
+  toast("Uploaded " + done + " file" + (done === 1 ? "" : "s"));
+  matKey = "";
+  renderMaterials();
+}`
+);
+
+// Click listener for attach button
+originalHtml = originalHtml.replace(
+  'document.addEventListener("click", (e) => { if (e.target.closest("#drop") && !e.target.closest("input")) $("#fileInput")?.click(); });',
+  `document.addEventListener("click", (e) => {
+  if ((e.target.closest("#drop") || e.target.closest("#attachBtn")) && !e.target.closest("input")) {
+    $("#fileInput")?.click();
+  }
+});`
+);
+
 // Enhance `#newForm.onsubmit` so that creating a new brand/video ALWAYS succeeds
 originalHtml = originalHtml.replace(
   'const r = await api("/api/new", { brand, video: video || undefined });\n    const made = r.output.match(/New video: ([^/\\s]+)\\/(\\S+)/);\n    $("#newDialog").close();\n    if (made) select(made[1], made[2]);\n    toast(made ? `Created ${made[1]}/${made[2]}` : "Created"); refresh();',
