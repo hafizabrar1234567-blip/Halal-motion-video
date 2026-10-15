@@ -1,5 +1,14 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "framework": null
+  "framework": null,
+  "rewrites": [
+    { "source": "/api/director/(.*)", "destination": "/api/director" },
+    { "source": "/api/director", "destination": "/api/director" },
+    { "source": "/api/brand-settings", "destination": "/api/brand-settings" },
+    { "source": "/api/upload/(.*)", "destination": "/api/upload" },
+    { "source": "/api/upload", "destination": "/api/upload" },
+    { "source": "/api/ai/(.*)", "destination": "/api/ai" },
+    { "source": "/api/ai", "destination": "/api/ai" }
+  ]
 }

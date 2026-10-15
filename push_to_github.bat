@@ -11,12 +11,13 @@ git add .
 
 echo.
 echo 2. Committing changes...
-git commit -m "Add media upload, attach button in chat, prominent materials placement, and isolate brand outputs"
+git commit -m "Add luxury golden logo, PWA desktop app support, and Windows desktop launcher"
 
 echo.
 echo 3. Pushing to GitHub main branch...
 git branch -M main
-git push -u origin main
+git push -u origin main > push_result.log 2>&1
+type push_result.log
 
 echo.
 if %errorlevel% equ 0 (

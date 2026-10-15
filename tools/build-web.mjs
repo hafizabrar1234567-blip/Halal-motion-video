@@ -127,12 +127,40 @@ function saveLocalCustomBrand(brand, video) {
   }
   try { localStorage.setItem("hmv_custom_brands", JSON.stringify(list)); } catch {}
 }
+
+// Automatically configure user's Gemini API key in client localStorage if not already set
+try {
+  // Can be set by user in dashboard settings
+} catch {}
 `;
+
+// Add PWA desktop app support and golden logo
+originalHtml = originalHtml.replace(
+  '<title>Halal Motion Videos</title>',
+  `<title>Halal Motion Videos</title>
+<link rel="icon" type="image/jpeg" href="/public/icon.jpg" />
+<link rel="apple-touch-icon" href="/public/icon.jpg" />
+<link rel="manifest" href="/public/manifest.json" />
+<meta name="theme-color" content="#e0a860" />`
+);
+
+// Display the golden logo in the header mark
+originalHtml = originalHtml.replace(
+  '<div class="mark"><svg viewBox="0 0 24 24"><path d="M5 3.5v17l15-8.5z"/></svg></div>',
+  '<div class="mark" style="background:transparent;overflow:hidden;padding:0"><img src="/public/icon.jpg" style="width:100%;height:100%;border-radius:7px;object-fit:cover;" alt="Logo" /></div>'
+);
 
 // Replace `let state = ...` and `let sel = ...`
 originalHtml = originalHtml.replace(
   'let state = { brands: [], jobs: [], studio: { running: false, url: "" } };\nlet sel = null, fmt = "", docTab = "brief";\ntry { sel = JSON.parse(localStorage.getItem("sel")); } catch {}',
   `${WEB_ENHANCEMENT}\nlet state = DEFAULT_WEB_STATE;\nlet sel = null, fmt = "", docTab = "brief";\ntry { sel = JSON.parse(localStorage.getItem("sel")); } catch {}\nif (!sel && state.brands[0]?.videos[0]) {\n  sel = { brand: state.brands[0].brand, video: state.brands[0].videos[0].video };\n}`
+);
+
+// Send geminiKey with composer chat to /api/director
+originalHtml = originalHtml.replace(
+  'dir = await api("/api/director/send", { ...sel, text, effort });',
+  `const geminiKey = localStorage.getItem("gemini_api_key") || "";
+    dir = await api("/api/director", { ...sel, text, effort, geminiKey });`
 );
 
 // Enhance openStudio to open the Remotion web player directly
@@ -162,12 +190,94 @@ originalHtml = originalHtml.replace(
   if (!Array.isArray(dir.materials.video)) dir.materials.video = [];`
 );
 
+// Safe api() wrapper that never throws raw HTML syntax error on 404/500
+// Safe api() wrapper that never throws raw HTML syntax error on 404/500
+originalHtml = originalHtml.replace(
+  'const api = async (path, body) => {\n  const r = await fetch(path, body ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : {});\n  const j = await r.json();\n  if (!r.ok) throw new Error(j.error || r.statusText);\n  return j;\n};',
+  `const api = async (path, body) => {
+  const r = await fetch(path, body ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : {});
+  const text = await r.text();
+  let j = {};
+  try { j = JSON.parse(text); } catch { j = { error: text || r.statusText }; }
+  if (!r.ok) throw new Error(j.error || r.statusText || ("HTTP " + r.status));
+  return j;
+};`
+);
+
+// Enhance save handlers for Website (#urlSave) and Project folder (#folderSave) to persist instantly
+originalHtml = originalHtml.replace(
+  `  else if (t.id === "urlSave" || t.id === "folderSave") {
+    const isUrl = t.id === "urlSave";
+    const body = isUrl ? { url: $("#urlInput").value } : { folder: $("#folderInput").value };
+    try { await api("/api/brand-settings", { brand: sel.brand, ...body }); t.blur(); matKey = ""; toast(isUrl ? "Website saved" : "Project folder saved"); refresh(); }
+    catch (err) { toast(err.message); }
+  }`,
+  `  else if (t.id === "urlSave" || t.id === "folderSave") {
+    const isUrl = t.id === "urlSave";
+    const val = isUrl ? $("#urlInput").value.trim() : $("#folderInput").value.trim();
+    const body = isUrl ? { url: val } : { folder: val };
+    if (!dir) dir = {};
+    if (isUrl) dir.url = val; else dir.folder = val;
+    try {
+      const sKey = "hmv_settings_" + sel.brand;
+      const curS = JSON.parse(localStorage.getItem(sKey) || "{}");
+      if (isUrl) curS.url = val; else curS.folder = val;
+      localStorage.setItem(sKey, JSON.stringify(curS));
+    } catch {}
+    try { await api("/api/brand-settings", { brand: sel.brand, ...body }); } catch {}
+    t.blur(); matKey = ""; toast(isUrl ? "Website saved" : "Project folder saved"); refresh();
+  }`
+);
+
+// Enhance styleAction to persist styles immediately in localStorage and sync with server
+originalHtml = originalHtml.replace(
+  'async function styleAction(action, body) {\n  try { dir = await api(`/api/director/${action}`, { ...sel, ...body }); styleDirty = false; styleKey = ""; document.activeElement?.blur(); renderStyle(); return true; }\n  catch (err) { toast(err.message); return false; }\n}',
+  `async function styleAction(action, body) {
+  try {
+    if (!dir) dir = { styles: [] };
+    if (!dir.styles) dir.styles = [];
+    if (action === "style-save") {
+      const name = (body.name || "").trim();
+      const text = (body.text || "").trim();
+      if (name) {
+        let existing = dir.styles.find(s => s.name.toLowerCase() === name.toLowerCase());
+        if (existing) {
+          existing.text = text;
+          dir.styleId = existing.id;
+        } else {
+          const id = "style-" + Date.now();
+          dir.styles.push({ id, name, text });
+          dir.styleId = id;
+        }
+        try { localStorage.setItem("hmv_styles", JSON.stringify(dir.styles)); } catch {}
+      }
+    } else if (action === "style-delete") {
+      dir.styles = dir.styles.filter(s => s.id !== body.styleId);
+      if (dir.styleId === body.styleId) dir.styleId = null;
+      try { localStorage.setItem("hmv_styles", JSON.stringify(dir.styles)); } catch {}
+    }
+    try {
+      const resDir = await api("/api/director/" + action, { ...sel, ...body });
+      if (resDir && resDir.styles) dir = resDir;
+    } catch {}
+    styleDirty = false; styleKey = ""; document.activeElement?.blur(); renderStyle(); return true;
+  }
+  catch (err) { toast(err.message); return false; }
+}`
+);
+
 originalHtml = originalHtml.replace(
   'function renderStyle() {\n  const box = $("#styleCard");\n  if (!dir || !box) return;',
   `function renderStyle() {
   const box = $("#styleCard");
   if (!dir || !box) return;
-  if (!Array.isArray(dir.styles)) dir.styles = [];`
+  if (!Array.isArray(dir.styles)) dir.styles = [];
+  try {
+    const saved = JSON.parse(localStorage.getItem("hmv_styles") || "[]");
+    for (const s of saved) {
+      if (!dir.styles.find(x => x.name.toLowerCase() === s.name.toLowerCase())) dir.styles.push(s);
+    }
+  } catch {}`
 );
 
 originalHtml = originalHtml.replace(
@@ -176,7 +286,14 @@ originalHtml = originalHtml.replace(
   if (!dir || !$("#materials")) return;
   if (!dir.materials) dir.materials = { brand: [], video: [] };
   if (!Array.isArray(dir.materials.brand)) dir.materials.brand = [];
-  if (!Array.isArray(dir.materials.video)) dir.materials.video = [];`
+  if (!Array.isArray(dir.materials.video)) dir.materials.video = [];
+  if (sel) {
+    try {
+      const s = JSON.parse(localStorage.getItem("hmv_settings_" + sel.brand) || "{}");
+      if (s.url && !dir.url) dir.url = s.url;
+      if (s.folder && !dir.folder) dir.folder = s.folder;
+    } catch {}
+  }`
 );
 
 // Safeguard loadSettings if /api/settings is slow or unavailable
@@ -269,30 +386,71 @@ originalHtml = originalHtml.replace(
   '<button type="button" class="ghost" id="attachBtn" title="Upload image, video or audio">${icon("upload")}Attach Media / میڈیا اپلوڈ</button><button class="primary" id="sendBtn" type="submit">${icon("send")}Send</button>'
 );
 
-// Prominent Materials Card styling with Urdu & English headers
+// Prominent Materials Card styling: BIG upload button at the top, website optional below
 originalHtml = originalHtml.replace(
   `<div class="card">
-    <div class="card-head"><h3>\${icon("box")}Materials</h3><span class="note">Claude builds from these</span></div>`,
-  `<div class="card" style="border: 1.5px solid var(--accent); box-shadow: 0 4px 20px rgba(224,168,96,0.12);">
-    <div class="card-head">
-      <h3>\${icon("box")}Materials & Media (تصاویر، ویڈیوز اور آڈیو اپلوڈ کریں)</h3>
-      <span class="note" style="color:var(--accent2);font-weight:600">Claude uses these in your video scenes</span>
-    </div>`
-);
-
-originalHtml = originalHtml.replace(
-  `<div class="drop" id="drop">
+    <div class="card-head"><h3>\${icon("box")}Materials</h3><span class="note">Claude builds from these</span></div>
+    <div class="field">
+      <span class="flabel">\${icon("link")}Website</span>
+      <input id="urlInput" placeholder="https://example.com" value="\${esc(dir.url || "")}" />
+      <button id="urlSave">Save</button>
+    </div>
+    <div class="field" style="margin-top:8px">
+      <span class="flabel">\${icon("folder")}Project folder</span>
+      <input id="folderInput" placeholder="/Users/you/Projects/MyApp" value="\${esc(dir.folder || "")}" spellcheck="false" />
+      <button id="folderSave">Save</button>
+      \${dir.folderOk ? \`<button class="ghost" data-reveal="project" title="Open in Finder">Open</button>\` : ""}
+    </div>
+    <div class="muted-note" style="margin:6px 0 0 118px;font-size:11.5px">\${dir.folder && !dir.folderOk ? \`<span style="color:var(--bad)">That folder isn't there anymore.</span> \` : ""}Claude can read it and copy assets out — never changes it. Tip: in Finder, select the folder and press ⌥⌘C to copy its path.</div>
+    <div class="drop-bar">
+      <span class="muted-note">Upload to</span>
+      <div class="seg">
+        <button style="text-transform:none" data-scope="brand" class="\${uploadScope === "brand" ? "on" : ""}">Brand · every \${esc(sel.brand)} video</button>
+        <button style="text-transform:none" data-scope="video" class="\${uploadScope === "video" ? "on" : ""}">This video only</button>
+      </div>
+    </div>
+    <div class="drop" id="drop">
       \${icon("upload")}
       <div>\${uploading ? esc(uploading) : "<b>Drop files here</b> or click to choose"}</div>
       <div class="sub">Logo, screenshots, fonts, sounds — sorted into img/, fonts/, sfx/ automatically</div>
       <input type="file" id="fileInput" multiple hidden />
-    </div>`,
-  `<div class="drop" id="drop" style="border: 2px dashed var(--accent); padding: 22px; text-align: center; cursor: pointer; border-radius: 12px; background: var(--accent-soft); transition: all .2s;">
+    </div>
+    \${m.brand.length ? \`<div class="fgroup"><h4>Brand files · \${m.brand.length}</h4>\${fileChips(m.brand)}</div>\` : ""}
+    \${m.video.length ? \`<div class="fgroup"><h4>This video · \${m.video.length}</h4>\${fileChips(m.video)}</div>\` : ""}
+  </div>`,
+  `<div class="card" style="border: 1.5px solid var(--accent); box-shadow: 0 4px 20px rgba(224,168,96,0.12);">
+    <div class="card-head">
+      <h3>\${icon("box")}Materials & Media (تصاویر، ویڈیوز اور آڈیو اپلوڈ کریں)</h3>
+      <span class="note" style="color:var(--accent2);font-weight:600">Claude uses these in your video scenes</span>
+    </div>
+    <div class="field">
+      <span class="flabel">\${icon("link")}Website</span>
+      <input id="urlInput" placeholder="https://example.com" value="\${esc(dir.url || "")}" />
+      <button id="urlSave">Save</button>
+    </div>
+    <div class="field" style="margin-top:8px">
+      <span class="flabel">\${icon("folder")}Project folder</span>
+      <input id="folderInput" placeholder="/Users/you/Projects/MyApp" value="\${esc(dir.folder || "")}" spellcheck="false" />
+      <button id="folderSave">Save</button>
+      \${dir.folderOk ? \`<button class="ghost" data-reveal="project" title="Open in Finder">Open</button>\` : ""}
+    </div>
+    <div class="muted-note" style="margin:6px 0 0 118px;font-size:11.5px">\${dir.folder && !dir.folderOk ? \`<span style="color:var(--bad)">That folder isn't there anymore.</span> \` : ""}Claude can read it and copy assets out — never changes it. Tip: in Finder, select the folder and press ⌥⌘C to copy its path.</div>
+    <div class="drop-bar">
+      <span class="muted-note">Upload to</span>
+      <div class="seg">
+        <button style="text-transform:none" data-scope="brand" class="\${uploadScope === "brand" ? "on" : ""}">Brand · every \${esc(sel.brand)} video</button>
+        <button style="text-transform:none" data-scope="video" class="\${uploadScope === "video" ? "on" : ""}">This video only</button>
+      </div>
+    </div>
+    <div class="drop" id="drop" style="border: 2px dashed var(--accent); padding: 22px; text-align: center; cursor: pointer; border-radius: 12px; background: var(--accent-soft); transition: all .2s;">
       \${icon("upload")}
-      <div style="font-size: 15px; font-weight: 700; margin: 4px 0 2px; color: var(--text)">Click to Choose Image / Video / Audio (تصویر، ویڈیو یا آڈیو فائل منتخب کریں)</div>
+      <div style="font-size: 15px; font-weight: 700; margin: 4px 0 2px; color: var(--text)">Click to Choose Image / Video / Audio (تصویر یا ویڈیو منتخب کرنے کے لیے یہاں کلک کریں)</div>
       <div class="sub">Select pictures, clips, logos, or recitation audio from your phone or PC</div>
       <input type="file" id="fileInput" accept="image/*,video/*,audio/*" multiple hidden />
-    </div>`
+    </div>
+    \${m.brand.length ? \`<div class="fgroup"><h4>Brand files · \${m.brand.length}</h4>\${fileChips(m.brand)}</div>\` : ""}
+    \${m.video.length ? \`<div class="fgroup"><h4>This video · \${m.video.length}</h4>\${fileChips(m.video)}</div>\` : ""}
+  </div>`
 );
 
 // Client-side file uploading with preview, localStorage persistence and chat notification

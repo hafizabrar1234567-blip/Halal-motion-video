@@ -126,7 +126,7 @@ export default async function handler(req, res) {
     // 2. If Gemini API key is available, use Google Gemini for dynamic generation of ANY verse/dua
     if (geminiKey) {
       try {
-        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`;
+        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${geminiKey}`;
         const prompt = `You are a specialized Quran & Islamic scholar AI for Halal Motion Videos.
 The user wants a Quranic verse or Dua for: "${query}".
 CRITICAL RULE FOR URDU TRANSLATION:

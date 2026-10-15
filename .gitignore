@@ -7,6 +7,10 @@ dist-bundle/
 .director/
 .venv/
 __pycache__/
+.env
+.env.local
+.env.*
+push_result.log
 
 # Root media & archives
 /*.mp4
@@ -23,6 +27,10 @@ src/brands/*
 public/*
 !public/_shared/
 !public/quran-promo/
+!public/logo.jpg
+!public/icon.jpg
+!public/manifest.json
+!public/app.ico
 
 # Styles you save in the dashboard stay local; the built-in styles ship in tools/styles.mjs.
 styles/library.json

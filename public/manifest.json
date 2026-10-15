@@ -1,0 +1,22 @@
+{
+  "name": "Halal Motion Videos",
+  "short_name": "HalalMotion",
+  "description": "Create Halal Motion Graphics & Quran Videos with Remotion and AI Director",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0d1117",
+  "theme_color": "#e0a860",
+  "icons": [
+    {
+      "src": "/public/icon.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/public/logo.jpg",
+      "sizes": "1024x1024",
+      "type": "image/jpeg"
+    }
+  ]
+}
