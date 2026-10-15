@@ -351,10 +351,23 @@ originalHtml = originalHtml.replace(
 };`
 );
 
-// Guarantee rk in refresh includes brand and video name
+// Guarantee rk in refresh includes brand and video name safely
 originalHtml = originalHtml.replace(
   'const rk = JSON.stringify([fmt, docTab, c.video.outputs, c.video.doc, c.brand.brandDoc]);',
-  'const rk = JSON.stringify([b.brand, v.video, fmt, docTab, c.video.outputs, c.video.doc, c.brand.brandDoc]);'
+  'const { brand: b, video: v } = c;\n  const rk = JSON.stringify([b.brand, v.video, fmt, docTab, c.video.outputs, c.video.doc, c.brand.brandDoc]);'
+);
+
+// Safeguard renderRest against missing formats or outputs
+originalHtml = originalHtml.replace(
+  'function renderRest() {\n  const c = current();\n  if (!c || !$("#rest")) return;\n  const { brand: b, video: v } = c;',
+  `function renderRest() {
+  const c = current();
+  if (!c || !$("#rest")) return;
+  const { brand: b, video: v } = c;
+  if (!v.formats || !Array.isArray(v.formats)) v.formats = ["vertical", "horizontal"];
+  if (!v.outputs) v.outputs = { videos: [], stills: [] };
+  if (!Array.isArray(v.outputs.videos)) v.outputs.videos = [];
+  if (!Array.isArray(v.outputs.stills)) v.outputs.stills = [];`
 );
 
 // Move Materials directly beneath Director chat for immediate visibility

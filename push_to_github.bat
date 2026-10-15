@@ -11,7 +11,7 @@ git add .
 
 echo.
 echo 2. Committing changes...
-git commit -m "Add luxury golden logo, PWA desktop app support, and Windows desktop launcher"
+git commit -m "Fix Preview and Render MP4 sidebar display in web dashboard"
 
 echo.
 echo 3. Pushing to GitHub main branch...
