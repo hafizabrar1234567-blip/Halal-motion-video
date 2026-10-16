@@ -6,6 +6,8 @@
     { "source": "/api/director/(.*)", "destination": "/api/director" },
     { "source": "/api/director", "destination": "/api/director" },
     { "source": "/api/brand-settings", "destination": "/api/brand-settings" },
+    { "source": "/api/render", "destination": "/api/render" },
+    { "source": "/api/stills", "destination": "/api/stills" },
     { "source": "/api/upload/(.*)", "destination": "/api/upload" },
     { "source": "/api/upload", "destination": "/api/upload" },
     { "source": "/api/ai/(.*)", "destination": "/api/ai" },

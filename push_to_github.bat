@@ -11,7 +11,7 @@ git add .
 
 echo.
 echo 2. Committing changes...
-git commit -m "Fix Preview and Render MP4 sidebar display in web dashboard"
+git commit -m "Add render and stills endpoints, video stills preview, and auto Gemini AI connection"
 
 echo.
 echo 3. Pushing to GitHub main branch...

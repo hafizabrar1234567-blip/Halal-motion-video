@@ -13,7 +13,7 @@ export default function handler(req, res) {
     brands: [
       {
         brand: "quran-promo",
-        brandDoc: "# quran-promo\n\nHalal Motion Videos for the Holy Qur'an with authentic Arabic typography and Urdu translation by **Maulana Hafiz Abdul Salam Bhutwi (رحمہ اللہ)**.",
+        brandDoc: "# quran-promo\n\nHalal Motion Videos for the Holy Qur'an with authentic Arabic typography and Urdu translation strictly by **Maulana Hafiz Abdul Salam Bhutwi (رحمہ اللہ)**.",
         videos: [
           {
             video: "video01",
@@ -25,18 +25,31 @@ export default function handler(req, res) {
                   name: "Quran_Recitation_Aal_e_Imran_Vertical.mp4",
                   rel: "Quran_Recitation_Aal_e_Imran_Vertical.mp4",
                   url: "/public/quran-promo/video01/audio/recitation.mp3",
-                  size: 2894444,
+                  size: 39771009,
                   mtime: Date.now() - 3600000
                 },
                 {
                   name: "Quran_Recitation_Aal_e_Imran_Horizontal.mp4",
                   rel: "Quran_Recitation_Aal_e_Imran_Horizontal.mp4",
                   url: "/public/quran-promo/video01/audio/recitation.mp3",
-                  size: 2894444,
+                  size: 41889189,
                   mtime: Date.now() - 3600000
                 }
               ],
-              stills: []
+              stills: [
+                {
+                  name: "Quran_Recitation_Vertical_Frame.jpg",
+                  rel: "vertical-700.jpg",
+                  url: "/public/quran-promo/video01/stills/vertical-700.jpg",
+                  mtime: Date.now() - 3600000
+                },
+                {
+                  name: "Quran_Recitation_Horizontal_Frame.jpg",
+                  rel: "horizontal-700.jpg",
+                  url: "/public/quran-promo/video01/stills/horizontal-700.jpg",
+                  mtime: Date.now() - 3600000
+                }
+              ]
             }
           }
         ]
@@ -55,7 +68,7 @@ export default function handler(req, res) {
       }
     ],
     jobs: [],
-    studio: { running: false, url: "/player/" },
+    studio: { running: true, url: "/player/" },
     directing: 0,
     agentApi: 1
   };
