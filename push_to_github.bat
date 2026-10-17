@@ -11,7 +11,7 @@ git add .
 
 echo.
 echo 2. Committing changes...
-git commit -m "Add render and stills endpoints, video stills preview, and auto Gemini AI connection"
+git commit -m "Support approve brief and storyboard, instant render outputs in dashboard, and preview stills"
 
 echo.
 echo 3. Pushing to GitHub main branch...

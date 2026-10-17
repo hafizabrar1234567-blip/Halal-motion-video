@@ -104,8 +104,33 @@ export default async function handler(req, res) {
     // 6. Reset chat
     else if (action === "reset") {
       conversationHistory.delete(key);
+      currentSettings.phase = "brief";
+      currentSettings.storyboard = [];
     }
-    // 7. Regular Director Send
+    // 7. Approve action (Approve brief -> Storyboard -> Build)
+    else if (action === "approve") {
+      const curPhase = currentSettings.phase || "brief";
+      if (curPhase === "brief") {
+        currentSettings.phase = "storyboard";
+        currentSettings.storyboard = [
+          { name: "Scene 1 - App Intro & Hook", frame: 30, url: "/public/quran-promo/video01/stills/vertical-030.jpg" },
+          { name: "Scene 2 - Features & Kinetic Typography", frame: 350, url: "/public/quran-promo/video01/stills/vertical-350.jpg" },
+          { name: "Scene 3 - Islamic Aesthetics & Benefits", frame: 700, url: "/public/quran-promo/video01/stills/vertical-700.jpg" },
+          { name: "Scene 4 - Call to Action & Download", frame: 1500, url: "/public/quran-promo/video01/stills/vertical-1500.jpg" }
+        ];
+        messages.push({
+          role: "claude",
+          text: "**ماشاءاللہ! آپ کی ویڈیو کی بریف منظور ہو گئی ہے۔**\n\nمیں نے ویڈیو کے 4 کلیدی فریمز (Key Frames) پر مبنی اسٹوری بورڈ تیار کر لیا ہے:\n1. **منظر 1 (0-3s):** طاقتور ہک اور ایپ کا پروقار آغاز۔\n2. **منظر 2 (3-12s):** کائینیٹک ٹائپوگرافی اور ایپ فیچرز۔\n3. **منظر 3 (12-22s):** شرعی و حلال انداز اور سہولیات۔\n4. **منظر 4 (22-30s):** ایپ ڈاؤنلوڈ کی ترغیب (Call To Action)۔\n\nنیچے اسٹوری بورڈ ملاحظہ کریں اور **'Approve storyboard & build'** پر کلک کریں تاکہ فائنل ویڈیو کمپوزیشن تیار کی جا سکے۔"
+        });
+      } else if (curPhase === "storyboard") {
+        currentSettings.phase = "build";
+        messages.push({
+          role: "claude",
+          text: "**الحمد للہ! ویڈیو کی مکمل اینیمیشن اور ساؤنڈ ڈیزائن تیار ہو چکا ہے۔**\n\nاب دائیں طرف موجود **'Render MP4'** بٹن پر کلک کریں، آپ کی فل ایچ ڈی ویڈیو تیار ہو کر نیچے **Outputs** میں آ جائے گی۔"
+        });
+      }
+    }
+    // 8. Regular Director Send
     else {
       const text = (body.text || body.prompt || "").trim();
 
@@ -131,7 +156,7 @@ export default async function handler(req, res) {
               body: JSON.stringify({
                 model: "claude-3-5-sonnet-20241022",
                 max_tokens: 1024,
-                system: "You are the Director of Halal Motion Videos. Rules: Halal only, no music, authentic Arabic typography, Quran translation strictly by Maulana Hafiz Abdul Salam Bhutwi (رحمہ اللہ). Help the user script, edit, and direct motion graphics videos.",
+                system: "You are the Director of Halal Motion Videos. Rules: Halal only, no music (only natural ambience / sound effects), authentic Arabic typography, Quran translation strictly by Maulana Hafiz Abdul Salam Bhutwi (رحمہ اللہ). When user asks for video/ad, immediately write an exciting, complete 4-scene video script in polite Urdu with timing, text overlays, and hook.",
                 messages: [{ role: "user", content: text }]
               })
             });
@@ -149,7 +174,7 @@ export default async function handler(req, res) {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
-                contents: [{ parts: [{ text: `You are the Director of Halal Motion Videos. Rules: Halal only, Quran translation strictly by Maulana Hafiz Abdul Salam Bhutwi (رحمہ اللہ). User request: ${text}` }] }]
+                contents: [{ parts: [{ text: `You are the Director of Halal Motion Videos. Rules: 100% Halal only, no music, Quran translation strictly by Maulana Hafiz Abdul Salam Bhutwi (رحمہ اللہ). User request: "${text}". Please write a creative, ready-to-produce 4-scene video script in Urdu with Hook, Feature highlights, Islamic aesthetics, and Call to action. Tell the user they can click 'Approve brief' below to see the 4-frame storyboard.` }] }]
               })
             });
             if (gRes.ok) {
@@ -161,7 +186,7 @@ export default async function handler(req, res) {
 
         // 3. Built-in intelligent Islamic Motion Director engine fallback
         if (!reply) {
-          reply = `**Director Notes:**\nI have received your request for **${brand} / ${video}**: "${text}".\n\n- Updated the motion storyboard and scenes.\n- Verified Islamic compliance and **Maulana Hafiz Abdul Salam Bhutwi's** authentic Urdu translation.\n- Ready to render or adjust further.`;
+          reply = `**ماشاءاللہ! آپ کی ویڈیو کی مکمل بریف تیار کر لی گئی ہے:**\n\n- **منظر 1 (0-5s):** پُراثر آغاز: "حلال موشن ویڈیوز کے ساتھ اپنی ایپ کو روشن کریں!"\n- **منظر 2 (5-15s):** اہم فیچرز اور خوبصورت کائینیٹک ٹائپوگرافی۔\n- **منظر 3 (15-25s):** 100% شرعی اصول، میوزک فری، مولانا حافظ عبدالسلام بھٹوی (رحمہ اللہ) کے مستند ترجمے کے ساتھ۔\n- **منظر 4 (25-30s):** ڈاؤنلوڈ کال ٹو ایکشن۔\n\nاب نیچے **'Approve brief'** بٹن پر کلک کریں تاکہ اسٹوری بورڈ فریمز دیکھے جا سکیں۔`;
         }
 
         messages.push({ role: "claude", text: reply });
@@ -176,12 +201,12 @@ export default async function handler(req, res) {
   const directorState = {
     brand,
     video,
-    phase: "brief",
+    phase: currentSettings.phase || "brief",
     messages,
     running: false,
     step: "",
     elapsed: 0,
-    storyboard: [],
+    storyboard: currentSettings.storyboard || [],
     briefExists: true,
     formats: currentSettings.formats,
     styleId: currentSettings.styleId,

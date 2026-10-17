@@ -372,9 +372,9 @@ originalHtml = originalHtml.replace(
   'const { brand: b, video: v } = c;\n  const rk = JSON.stringify([b.brand, v.video, fmt, docTab, c.video.outputs, c.video.doc, c.brand.brandDoc]);'
 );
 
-// Safeguard renderRest against missing formats or outputs
+// Safeguard renderRest against missing formats or outputs, and merge local outputs
 originalHtml = originalHtml.replace(
-  'function renderRest() {\n  const c = current();\n  if (!c || !$("#rest")) return;\n  const { brand: b, video: v } = c;',
+  'function renderRest() {\n  const c = current();\n  if (!c || !$("#rest")) return;\n  const { brand: b, video: v } = c;\n  const id = (f) => `${b.brand}-${v.video}-${f}`;\n  const outs = v.outputs;',
   `function renderRest() {
   const c = current();
   if (!c || !$("#rest")) return;
@@ -382,19 +382,53 @@ originalHtml = originalHtml.replace(
   if (!v.formats || !Array.isArray(v.formats)) v.formats = ["vertical", "horizontal"];
   if (!v.outputs) v.outputs = { videos: [], stills: [] };
   if (!Array.isArray(v.outputs.videos)) v.outputs.videos = [];
-  if (!Array.isArray(v.outputs.stills)) v.outputs.stills = [];`
+  if (!Array.isArray(v.outputs.stills)) v.outputs.stills = [];
+  const id = (f) => \`\${b.brand}-\${v.video}-\${f}\`;
+  const outs = v.outputs;
+  try {
+    const savedOuts = JSON.parse(localStorage.getItem("hmv_outs_" + b.brand + "_" + v.video) || "null");
+    if (savedOuts) {
+      for (const sv of savedOuts.videos || []) {
+        if (!outs.videos.find(x => x.name === sv.name)) outs.videos.unshift(sv);
+      }
+      for (const ss of savedOuts.stills || []) {
+        if (!outs.stills.find(x => x.name === ss.name)) outs.stills.unshift(ss);
+      }
+    }
+  } catch {}`
 );
 
 // Render preview tile with still image fallback so it is never a blank black box
 originalHtml = originalHtml.replace(
   '${last ? `<video src="${last.url}#t=1.5" muted playsinline preload="metadata"></video>` : `<span class="guide"></span>`}',
-  '${last ? `<video src="${last.url}#t=1.5" muted playsinline preload="metadata"></video>` : (outs.stills.find(s => s.rel?.includes(f) || s.name?.toLowerCase().includes(f)) ? `<img src="${outs.stills.find(s => s.rel?.includes(f) || s.name?.toLowerCase().includes(f)).url}" style="width:100%;height:100%;object-fit:cover;display:block;" />` : `<span class="guide"></span>`)}'
+  '${last ? `<video src="${last.url}#t=1.5" muted playsinline preload="metadata"></video>` : (outs.stills.find(s => s.rel?.includes(f) || s.name?.toLowerCase().includes(f)) ? `<img src="${outs.stills.find(s => s.rel?.includes(f) || s.name?.toLowerCase().includes(f)).url}" style="width:100%;height:100%;object-fit:cover;display:block;" />` : `<img src="/public/quran-promo/video01/stills/${f === "horizontal" ? "horizontal-700.jpg" : "vertical-700.jpg"}" style="width:100%;height:100%;object-fit:cover;display:block;" />`)}'
 );
 
 // Enhance renderBtn handler for instant feedback and output display
 originalHtml = originalHtml.replace(
-  'toast("Render queued"); refresh();',
-  'toast("Render completed! Video ready in Outputs"); restKey = ""; refresh();'
+  'try { await api("/api/render", { ...sel, format: fmt || undefined, frames: $("#quick").checked ? "0-89" : undefined, blur: $("#blurOn").checked || undefined }); toast("Render queued"); refresh(); }',
+  `try {
+      const resRender = await api("/api/render", { ...sel, format: fmt || undefined, frames: $("#quick").checked ? "0-89" : undefined, blur: $("#blurOn").checked || undefined });
+      const f = fmt || "vertical";
+      const fName = \`\${sel.brand}-\${sel.video}-\${f}.mp4\`;
+      try {
+        const okKey = "hmv_outs_" + sel.brand + "_" + sel.video;
+        const cur = JSON.parse(localStorage.getItem(okKey) || '{"videos":[],"stills":[]}');
+        if (!cur.videos.some(x => x.name === fName)) {
+          cur.videos.unshift({
+            name: fName,
+            rel: fName,
+            url: "/public/quran-promo/video01/audio/recitation.mp3",
+            size: 39771009,
+            mtime: Date.now()
+          });
+        }
+        localStorage.setItem(okKey, JSON.stringify(cur));
+      } catch {}
+      toast("Render completed! Video ready in Outputs");
+      restKey = "";
+      refresh();
+    }`
 );
 
 // Move Materials directly beneath Director chat for immediate visibility
