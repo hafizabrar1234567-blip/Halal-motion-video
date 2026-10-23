@@ -1,12 +1,12 @@
 @echo off
 title Push Halal Motion Videos to GitHub
 echo ===================================================
-echo   Pushing Original Dashboard & Fixed New Video
+echo   Pushing Original Dashboard & Fixed Outputs
 echo   Repository: https://github.com/hafizabrar1234567-blip/Halal-motion-video.git
 echo ===================================================
 echo.
 
-echo 1. Staging original dashboard & API endpoints...
+echo 1. Staging changes...
 git add .
 
 echo.
@@ -16,8 +16,7 @@ git commit -m "Add api/reveal, real mp4 video playback and download, and smooth 
 echo.
 echo 3. Pushing to GitHub main branch...
 git branch -M main
-git push -u origin main > push_result.log 2>&1
-type push_result.log
+git push -u origin main
 
 echo.
 if %errorlevel% equ 0 (
@@ -27,7 +26,7 @@ if %errorlevel% equ 0 (
     echo ===================================================
 ) else (
     echo ===================================================
-    echo   [FAILED] Push failed. 
+    echo   [FAILED] Push failed. Check error above.
     echo ===================================================
 )
 echo.
