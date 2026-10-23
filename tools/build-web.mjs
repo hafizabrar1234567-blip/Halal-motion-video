@@ -54,6 +54,48 @@ const WEB_ENHANCEMENT = `
 const DEFAULT_WEB_STATE = {
   brands: [
     {
+      brand: "halal-promo",
+      brandDoc: "# Halal Motion Videos — Official App Promo\\n\\nOfficial motion graphics promo video for Halal Motion Videos application.",
+      videos: [
+        {
+          video: "video01",
+          formats: ["vertical"],
+          doc: "# Halal Motion Videos / App Promo\\n\\n- **عنوان:** حلال موشن ویڈیوز ایپ پرومو ایڈ\\n- **خصوصیات:** بغیر نامناسب تصاویر، بغیر چہروں کے اینیمیشن، میوزک فری\\n- **کوالٹی:** 1080p فل ایچ ڈی\\n- **سائز:** 9:16 Vertical (Reels / Shorts / TikTok / WhatsApp Status)",
+          outputs: {
+            videos: [
+              {
+                name: "Halal_Motion_Videos_App_Promo.mp4",
+                rel: "halal-motion-app-ad.mp4",
+                url: "/public/quran-promo/video01/halal-motion-app-ad.mp4",
+                size: 9008435,
+                mtime: Date.now()
+              }
+            ],
+            stills: [
+              {
+                name: "App_Promo_Scene_1.jpg",
+                rel: "ad-030.jpg",
+                url: "/public/quran-promo/video01/stills/ad-030.jpg",
+                mtime: Date.now()
+              },
+              {
+                name: "App_Promo_Scene_2.jpg",
+                rel: "ad-150.jpg",
+                url: "/public/quran-promo/video01/stills/ad-150.jpg",
+                mtime: Date.now()
+              },
+              {
+                name: "App_Promo_Scene_3.jpg",
+                rel: "ad-300.jpg",
+                url: "/public/quran-promo/video01/stills/ad-300.jpg",
+                mtime: Date.now()
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
       brand: "quran-promo",
       brandDoc: "# quran-promo\\n\\nHalal Motion Videos for the Holy Qur'an with authentic Arabic typography and Urdu translation strictly by **Maulana Hafiz Abdul Salam Bhutwi (رحمہ اللہ)**.",
       videos: [
@@ -104,7 +146,31 @@ const DEFAULT_WEB_STATE = {
           video: "video01",
           formats: ["vertical", "horizontal"],
           doc: "# Starter Video\\n\\nStarter template video.",
-          outputs: { videos: [], stills: [] }
+          outputs: {
+            videos: [
+              {
+                name: "Halal_Motion_App_Ad.mp4",
+                rel: "halal-motion-app-ad.mp4",
+                url: "/public/quran-promo/video01/halal-motion-app-ad.mp4",
+                size: 9008435,
+                mtime: Date.now()
+              }
+            ],
+            stills: [
+              {
+                name: "App_Promo_Hook.jpg",
+                rel: "ad-030.jpg",
+                url: "/public/quran-promo/video01/stills/ad-030.jpg",
+                mtime: Date.now()
+              },
+              {
+                name: "App_Promo_Features.jpg",
+                rel: "ad-150.jpg",
+                url: "/public/quran-promo/video01/stills/ad-150.jpg",
+                mtime: Date.now()
+              }
+            ]
+          }
         }
       ]
     }
