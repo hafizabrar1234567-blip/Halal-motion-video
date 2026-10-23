@@ -26,17 +26,10 @@ export default function handler(req, res) {
               videos: [
                 ...(renderedOutputsStore?.get("quran-promo/video01") || []),
                 {
-                  name: "Quran_Recitation_Aal_e_Imran_Vertical.mp4",
-                  rel: "Quran_Recitation_Aal_e_Imran_Vertical.mp4",
-                  url: "/public/quran-promo/video01/audio/recitation.mp3",
+                  name: "quran-promo-video01-vertical.mp4",
+                  rel: "quran-promo-video01-vertical.mp4",
+                  url: "/public/quran-promo/video01/quran-promo-video01-vertical.mp4",
                   size: 39771009,
-                  mtime: Date.now() - 3600000
-                },
-                {
-                  name: "Quran_Recitation_Aal_e_Imran_Horizontal.mp4",
-                  rel: "Quran_Recitation_Aal_e_Imran_Horizontal.mp4",
-                  url: "/public/quran-promo/video01/audio/recitation.mp3",
-                  size: 41889189,
                   mtime: Date.now() - 3600000
                 }
               ],
@@ -67,7 +60,16 @@ export default function handler(req, res) {
             formats: ["vertical", "horizontal"],
             doc: "# Starter Video\n\nStarter video template.",
             outputs: {
-              videos: starterVideos,
+              videos: [
+                ...starterVideos,
+                {
+                  name: "starter-video01-vertical.mp4",
+                  rel: "starter-video01-vertical.mp4",
+                  url: "/public/quran-promo/video01/starter-video01-vertical.mp4",
+                  size: 8762511,
+                  mtime: Date.now() - 3600000
+                }
+              ],
               stills: [
                 {
                   name: "Starter_Vertical_Frame.jpg",

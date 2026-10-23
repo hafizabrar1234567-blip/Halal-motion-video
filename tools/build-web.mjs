@@ -418,8 +418,8 @@ originalHtml = originalHtml.replace(
           cur.videos.unshift({
             name: fName,
             rel: fName,
-            url: "/public/quran-promo/video01/audio/recitation.mp3",
-            size: 39771009,
+            url: sel.brand === "_starter" ? "/public/quran-promo/video01/starter-video01-vertical.mp4" : "/public/quran-promo/video01/quran-promo-video01-vertical.mp4",
+            size: sel.brand === "_starter" ? 8762511 : 39771009,
             mtime: Date.now()
           });
         }
@@ -429,6 +429,21 @@ originalHtml = originalHtml.replace(
       restKey = "";
       refresh();
     }`
+);
+
+// Enhance d.reveal click handler so clicking Output / Files / Code navigates smoothly without 404
+originalHtml = originalHtml.replace(
+  'else if (d.reveal) api("/api/reveal", { ...sel, where: d.reveal }).catch((err) => toast(err.message));',
+  `else if (d.reveal) {
+    if (d.reveal === "out") {
+      document.getElementById("sideOutputs")?.scrollIntoView({ behavior: "smooth" });
+      toast("Scroll to Outputs on the right sidebar");
+    } else if (d.reveal === "public" || d.reveal === "src") {
+      document.getElementById("materials")?.scrollIntoView({ behavior: "smooth" });
+      toast("Materials and project files are below");
+    }
+    api("/api/reveal", { ...sel, where: d.reveal }).catch(() => {});
+  }`
 );
 
 // Move Materials directly beneath Director chat for immediate visibility

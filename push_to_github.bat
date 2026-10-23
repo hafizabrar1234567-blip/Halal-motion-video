@@ -11,7 +11,7 @@ git add .
 
 echo.
 echo 2. Committing changes...
-git commit -m "Support approve brief and storyboard, instant render outputs in dashboard, and preview stills"
+git commit -m "Add api/reveal, real mp4 video playback and download, and smooth output navigation"
 
 echo.
 echo 3. Pushing to GitHub main branch...

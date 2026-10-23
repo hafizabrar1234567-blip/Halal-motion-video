@@ -10,6 +10,7 @@
     { "source": "/api/stills", "destination": "/api/stills" },
     { "source": "/api/upload/(.*)", "destination": "/api/upload" },
     { "source": "/api/upload", "destination": "/api/upload" },
+    { "source": "/api/reveal", "destination": "/api/reveal" },
     { "source": "/api/ai/(.*)", "destination": "/api/ai" },
     { "source": "/api/ai", "destination": "/api/ai" }
   ]

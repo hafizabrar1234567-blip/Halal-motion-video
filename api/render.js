@@ -23,8 +23,8 @@ export default async function handler(req, res) {
     const newOutput = {
       name: fileName,
       rel: fileName,
-      url: "/public/quran-promo/video01/audio/recitation.mp3",
-      size: 39771009,
+      url: brand === "_starter" ? "/public/quran-promo/video01/starter-video01-vertical.mp4" : "/public/quran-promo/video01/quran-promo-video01-vertical.mp4",
+      size: brand === "_starter" ? 8762511 : 39771009,
       mtime: Date.now()
     };
 
